@@ -6,10 +6,26 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+default = []
+# Sail's Spark Connect server. Off by default because it drags in the whole
+# Sail dependency tree (DataFusion, Arrow, tonic, pyo3); build with
+# `cargo build --features spark-connect`.
+spark-connect = ["dep:sail-common", "dep:sail-spark-connect"]
+# `sail spark shell`: the Spark Connect server plus an embedded PySpark REPL.
+# Adds pyo3 with an embedded interpreter, so the addon links `libpython`.
+spark-shell = ["spark-connect", "dep:pyo3"]
+sail-cli = ["dep:sail-cli", "dep:pyo3"]
+
 [dependencies]
-datafusion = "55.2.0"
-napi = "3"
+datafusion = { version = "55.2.0", features = ["avro"] }
+napi = { version = "3", features = ["tokio_rt"] }
 napi-derive = "3"
-tokio = { version = "1.53.2", features = ["rt-multi-thread"] }
+tokio = { version = "1.53.2", features = ["rt-multi-thread", "net", "sync"] }
+sail-common = { git = "https://github.com/lakehq/sail", tag = "v0.7.2", optional = true }
+sail-spark-connect = { git = "https://github.com/lakehq/sail", tag = "v0.7.2", optional = true }
+sail-cli = { git = "https://github.com/lakehq/sail", tag = "v0.7.2", optional = true, default-features = false }
+# Kept in step with Sail's own pyo3 (0.29) so Cargo unifies the two.
+pyo3 = { version = "0.29", optional = true }
 [build-dependencies]
 napi-build = "2"
