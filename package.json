@@ -1,5 +1,5 @@
 {
-  "name": "@lib/data",
+  "name": "@alloy-ts/data",
   "version": "0.0.0",
   "files": [
     "dist",

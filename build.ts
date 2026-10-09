@@ -8,7 +8,9 @@ async function run() {
   const useCross = args.includes("--use-cross");
 
   const targetIdx = args.findIndex((a) => a === "--target" || a === "-t");
-  const target = targetIdx !== -1 && args[targetIdx + 1] ? args[targetIdx + 1] : undefined;
+  const target = targetIdx !== -1 && args[targetIdx + 1]
+    ? args[targetIdx + 1]
+    : undefined;
 
   const cli = new NapiCli();
   await cli.build({
