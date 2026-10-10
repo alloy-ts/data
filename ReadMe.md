@@ -150,6 +150,23 @@ await ctx.execute(
 const res = await ctx.execute("SELECT a, b FROM example WHERE a <= b");
 ```
 
+### CLI Support & Thin Wrapper
+
+`@alloy-ts/data` provides thin TypeScript / NAPI wrappers over Sail's CLI and Spark shell CLI:
+
+- **`sail(args)`**: Low-level function forwarding command-line arguments array to Sail's CLI runner.
+- **`sailSparkServer(options?)`**: Starts the Spark Connect server (options: `ip`, `port`, `directory`).
+- **`sailSparkRun(options?)`**: Runs a PySpark script (options: `file`, `directory`).
+- **`sailSparkShell()`**: Starts the interactive `spark shell` (PySpark REPL with background Spark Connect server).
+
+#### Thin Wrapper Implementation
+
+Our CLI integration is designed as a thin NAPI bridge directly into `sail_cli::runner::main`:
+
+1. **Direct Dispatch**: The NAPI bindings (`src/cli.rs`) assemble command arguments (e.g. `["spark", "shell"]` or `["spark", "server", "--ip", ...]`) and pass them to Sail's internal `sail_cli::runner::main(argv)`.
+2. **Main Thread Python Initialization**: Before delegating to the Sail runner, `Python::initialize()` is called on the invoking thread. This ensures that CPython installs its OS signal handlers on Node's main thread so interactive sessions and Ctrl-C keyboard interrupts behave correctly during PySpark REPL / `spark shell` execution.
+3. **Zero Unnecessary Abstractions**: No extra server subprocesses or heavy wrappers are spun up; the CLI runner executes in-process within the native addon runtime.
+
 ### Functions and Operators
 
 The reference below lists the **built‑in Spark scalar functions** that Sail
