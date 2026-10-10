@@ -62,6 +62,12 @@ pub fn sail_spark_server(options: Option<SailSparkServerOptions>) -> Result<i32>
   }
   sail(args)
 }
+
+/// Run `sail spark shell` command (starts embedded PySpark shell connected to Sail Spark Connect server).
+#[napi]
+pub fn sail_spark_shell() -> Result<i32> {
+  sail(vec!["spark".to_string(), "shell".to_string()])
+}
 #[napi]
 pub fn sail_spark_run(options: Option<SailSparkRunOptions>) -> Result<i32> {
   let options = options.unwrap_or_default();

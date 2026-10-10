@@ -339,3 +339,20 @@ npm test             # vite-plus/test over src/**/*.test.ts
 
 See `src/sql.rs` (SQL API: `SessionContext`, `execute`, `QueryResult`) and
 `src/data_frame.rs` (DataFrame API) for the NAPI bindings.
+
+---
+
+## Sail / Spark Shell CLI Integration
+
+The native addon also supports invoking the Sail / Spark shell CLI programmatically via NAPI bindings (`src/cli.rs`) or directly through Cargo / command line:
+
+- **Programmable NAPI API:**
+  - `sail(args: string[])`: Generic CLI entry point delegating directly to `sail_cli::runner::main`.
+  - `sailSparkServer(options?)`: Starts the Spark Connect server (with `--ip`, `--port`, `--directory`).
+  - `sailSparkRun(options?)`: Runs a PySpark script (with `--file`, `--directory`).
+  - `sailSparkShell()`: Starts an interactive Spark shell REPL.
+
+- **Direct Shell CLI:**
+  - Run `cargo run -- spark server` to launch the Spark Connect server directly.
+  - Run `cargo run -- spark shell` to launch the PySpark shell REPL directly.
+  - Run `cargo run -- spark run -f script.py` to execute a script.

@@ -49,7 +49,7 @@ pub struct FieldInfo {
 impl FieldInfo {
   /// Describe every field of an Arrow schema.
   pub(crate) fn from_fields(fields: &Fields) -> Vec<Self> {
-    fields.iter().map(Self::from_field).collect()
+    fields.iter().map(|f| Self::from_field(f)).collect()
   }
 
   fn from_field(field: &Field) -> Self {

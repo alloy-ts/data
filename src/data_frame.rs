@@ -1,5 +1,4 @@
 use datafusion::arrow::ipc::writer::StreamWriter;
-use datafusion::common::DFSchema;
 use datafusion::dataframe::{DataFrame as DFDataFrame, DataFrameWriteOptions};
 use datafusion::logical_expr::{JoinType, Partitioning as DFPartitioning, SortExpr as DFSortExpr};
 use datafusion::prelude::{AvroReadOptions, CsvReadOptions, Expr, ParquetReadOptions, col};
@@ -153,9 +152,20 @@ fn resolve_scalar(value: &str, data_type: Option<&str>) -> napi::Result<ScalarVa
   let Some(data_type) = data_type else {
     return Ok(infer_scalar(value));
   };
-  let literal = format!("'{}'", value.replace('\'', "''"));
-  ScalarValue::from_sql(&format!("CAST({literal} AS {data_type})"), &DFSchema::empty())
-    .map_err(|e| invalid_arg(format!("cannot use {value:?} as {data_type}: {e}")))
+  let parsed_type: datafusion::arrow::datatypes::DataType = data_type
+    .parse()
+    .map_err(|e| invalid_arg(format!("cannot parse data_type {data_type}: {e}")))?;
+  match parsed_type {
+    datafusion::arrow::datatypes::DataType::Int8 => Ok(ScalarValue::Int8(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Int16 => Ok(ScalarValue::Int16(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Int32 => Ok(ScalarValue::Int32(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Int64 => Ok(ScalarValue::Int64(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Float32 => Ok(ScalarValue::Float32(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Float64 => Ok(ScalarValue::Float64(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Boolean => Ok(ScalarValue::Boolean(value.parse().ok())),
+    datafusion::arrow::datatypes::DataType::Date32 => Ok(ScalarValue::Date32(value.parse().ok())),
+    _ => Ok(ScalarValue::Utf8(Some(value.to_string()))),
+  }
 }
 
 #[napi]
@@ -659,7 +669,7 @@ impl DataFrame {
     let mut out = Vec::new();
     {
       let mut writer =
-        StreamWriter::try_new(&mut out, first.schema()).map_err(to_napi_err)?;
+        StreamWriter::try_new(&mut out, &first.schema()).map_err(|e| napi::Error::new(Status::GenericFailure, e.to_string()))?;
       for batch in &batches {
         // `write` checks the schema itself; this message is just clearer.
         if batch.schema() != first.schema() {
@@ -668,9 +678,9 @@ impl DataFrame {
             "cannot write record batches with different schemas to one IPC stream",
           ));
         }
-        writer.write(batch).map_err(to_napi_err)?;
+        writer.write(batch).map_err(|e| napi::Error::new(Status::GenericFailure, e.to_string()))?;
       }
-      writer.finish().map_err(to_napi_err)?;
+      writer.finish().map_err(|e| napi::Error::new(Status::GenericFailure, e.to_string()))?;
     }
     Ok(Uint8Array::new(out))
   }
