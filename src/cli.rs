@@ -17,6 +17,15 @@ pub struct SailSparkServerOptions {
   pub directory: Option<String>,
 }
 
+/// Options for the `sail spark shell` command.
+#[napi(object)]
+pub struct SailSparkShellOptions {
+  /// PySpark file to run or execute in shell context.
+  pub file: Option<String>,
+  /// Working directory for the shell (`--directory`).
+  pub directory: Option<String>,
+}
+
 /// Options for the `sail spark run` command.
 #[napi(object)]
 pub struct SailSparkRunOptions {
@@ -25,6 +34,33 @@ pub struct SailSparkRunOptions {
   /// Working directory for the job (`--directory`).
   pub directory: Option<String>,
 }
+
+/// Options for the `sail spark mcp-server` command.
+#[napi(object)]
+pub struct SailSparkMcpServerOptions {
+  /// Host to bind.
+  pub host: Option<String>,
+  /// Port to bind.
+  pub port: Option<u16>,
+  /// Transport protocol (e.g. sse / stdio).
+  pub transport: Option<String>,
+  /// Spark remote URI.
+  pub spark_remote: Option<String>,
+  /// Working directory (`--directory`).
+  pub directory: Option<String>,
+}
+
+/// Options for the `sail flight server` command.
+#[napi(object)]
+pub struct SailFlightServerOptions {
+  /// IP address to bind.
+  pub ip: Option<String>,
+  /// Port to bind.
+  pub port: Option<u16>,
+  /// Working directory (`--directory`).
+  pub directory: Option<String>,
+}
+
 #[napi]
 pub fn sail(args: Vec<String>) -> Result<i32> {
   // clap reads argv[0] as the program name.
@@ -44,6 +80,7 @@ pub fn sail(args: Vec<String>) -> Result<i32> {
     Err(error) => Err(Error::new(Status::GenericFailure, error.to_string())),
   }
 }
+
 #[napi]
 pub fn sail_spark_server(options: Option<SailSparkServerOptions>) -> Result<i32> {
   let options = options.unwrap_or_default();
@@ -62,6 +99,22 @@ pub fn sail_spark_server(options: Option<SailSparkServerOptions>) -> Result<i32>
   }
   sail(args)
 }
+
+#[napi]
+pub fn sail_spark_shell(options: Option<SailSparkShellOptions>) -> Result<i32> {
+  let options = options.unwrap_or_default();
+  let mut args = vec!["spark".to_string(), "shell".to_string()];
+  if let Some(file) = options.file {
+    args.push("--file".to_string());
+    args.push(file);
+  }
+  if let Some(directory) = options.directory {
+    args.push("--directory".to_string());
+    args.push(directory);
+  }
+  sail(args)
+}
+
 #[napi]
 pub fn sail_spark_run(options: Option<SailSparkRunOptions>) -> Result<i32> {
   let options = options.unwrap_or_default();
@@ -69,6 +122,52 @@ pub fn sail_spark_run(options: Option<SailSparkRunOptions>) -> Result<i32> {
   if let Some(file) = options.file {
     args.push("--file".to_string());
     args.push(file);
+  }
+  if let Some(directory) = options.directory {
+    args.push("--directory".to_string());
+    args.push(directory);
+  }
+  sail(args)
+}
+
+#[napi]
+pub fn sail_spark_mcp_server(options: Option<SailSparkMcpServerOptions>) -> Result<i32> {
+  let options = options.unwrap_or_default();
+  let mut args = vec!["spark".to_string(), "mcp-server".to_string()];
+  if let Some(host) = options.host {
+    args.push("--host".to_string());
+    args.push(host);
+  }
+  if let Some(port) = options.port {
+    args.push("--port".to_string());
+    args.push(port.to_string());
+  }
+  if let Some(transport) = options.transport {
+    args.push("--transport".to_string());
+    args.push(transport);
+  }
+  if let Some(spark_remote) = options.spark_remote {
+    args.push("--spark-remote".to_string());
+    args.push(spark_remote);
+  }
+  if let Some(directory) = options.directory {
+    args.push("--directory".to_string());
+    args.push(directory);
+  }
+  sail(args)
+}
+
+#[napi]
+pub fn sail_flight_server(options: Option<SailFlightServerOptions>) -> Result<i32> {
+  let options = options.unwrap_or_default();
+  let mut args = vec!["flight".to_string(), "server".to_string()];
+  if let Some(ip) = options.ip {
+    args.push("--ip".to_string());
+    args.push(ip);
+  }
+  if let Some(port) = options.port {
+    args.push("--port".to_string());
+    args.push(port.to_string());
   }
   if let Some(directory) = options.directory {
     args.push("--directory".to_string());

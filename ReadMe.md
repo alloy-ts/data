@@ -351,15 +351,16 @@ import {
 } from "@alloy-ts/data";
 
 // Direct shell CLI invocation:
+sail(["spark", "shell"]);
 sail(["spark", "server", "--ip", "127.0.0.1", "--port", "50051"]);
 
 // Programmable NAPI API invocation:
+sailSparkShell({ file: "script.py", directory: "/tmp" });
 sailSparkServer({ ip: "127.0.0.1", port: 50051 });
-sailSparkShell();
 sailSparkRun({ file: "script.py" });
 sailSparkMcpServer({ host: "127.0.0.1", port: 8000, transport: "sse" });
 sailFlightServer({ ip: "127.0.0.1", port: 32010 });
 ```
 
 See `src/sql.rs` (SQL API: `SessionContext`, `execute`, `QueryResult`),
-`src/data_frame.rs` (DataFrame API), and `src/cli.rs` (`sail` direct runner and programmable CLI functions) for the NAPI bindings.
+`src/data_frame.rs` (DataFrame API), and `src/cli.rs` (`sail` direct runner and programmable CLI functions including `sail_spark_shell`) for the NAPI bindings.

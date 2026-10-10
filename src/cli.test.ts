@@ -23,11 +23,13 @@ test("CLI direct shell and programmable API function exports are defined on modu
 
 test("Direct shell CLI argument execution calls sail function", () => {
   expect(() => addon.sail(["spark", "shell"])).toThrow("Native addon binding required");
+  expect(() => addon.sail(["spark", "server", "--port", "50051"])).toThrow("Native addon binding required");
 });
 
 test("Programmable NAPI API function calls option handlers", () => {
   expect(() => addon.sailSparkServer({ ip: "127.0.0.1", port: 50051 })).toThrow("Native addon binding required");
   expect(() => addon.sailSparkShell()).toThrow("Native addon binding required");
+  expect(() => addon.sailSparkShell({ file: "interactive.py", directory: "/tmp" })).toThrow("Native addon binding required");
   expect(() => addon.sailSparkRun({ file: "app.py" })).toThrow("Native addon binding required");
   expect(() => addon.sailSparkMcpServer({ host: "127.0.0.1", port: 8000 })).toThrow("Native addon binding required");
   expect(() => addon.sailFlightServer({ ip: "127.0.0.1", port: 32010 })).toThrow("Native addon binding required");
