@@ -150,6 +150,44 @@ await ctx.execute(
 const res = await ctx.execute("SELECT a, b FROM example WHERE a <= b");
 ```
 
+### Spark CLI & Programmable CLI API
+
+The native addon exposes the Sail/Spark CLI both for direct shell CLI usage and as a programmable TypeScript API:
+
+#### Shell CLI Usage
+
+You can pass standard arguments to the thin wrapper `sail` function:
+
+```ts
+import { sail } from "@alloy-ts/data";
+
+// Run spark shell directly
+sail(["spark", "shell"]);
+
+// Run spark server directly
+sail(["spark", "server", "--ip", "127.0.0.1", "--port", "50051"]);
+
+// Run spark run directly
+sail(["spark", "run", "--file", "app.py"]);
+```
+
+#### Programmable CLI API
+
+For convenient programmatic control from Node.js/TypeScript, convenience helper functions are exported:
+
+```ts
+import { sailSparkShell, sailSparkServer, sailSparkRun } from "@alloy-ts/data";
+
+// Start embedded PySpark / Spark shell
+sailSparkShell({ directory: "." });
+
+// Start Spark Connect server
+sailSparkServer({ ip: "127.0.0.1", port: 50051, directory: "." });
+
+// Execute PySpark job file
+sailSparkRun({ file: "script.py", directory: "." });
+```
+
 ### Functions and Operators
 
 The reference below lists the **built‑in Spark scalar functions** that Sail

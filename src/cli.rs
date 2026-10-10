@@ -7,6 +7,7 @@ const PROGRAM_NAME: &str = "sail";
 
 /// Options for the `sail spark server` command.
 #[napi(object)]
+#[derive(Default)]
 pub struct SailSparkServerOptions {
   /// IP address to bind. Defaults to `127.0.0.1`, as in the CLI.
   pub ip: Option<String>,
@@ -19,10 +20,19 @@ pub struct SailSparkServerOptions {
 
 /// Options for the `sail spark run` command.
 #[napi(object)]
+#[derive(Default)]
 pub struct SailSparkRunOptions {
   /// PySpark file to run. Defaults to `-`, which reads stdin.
   pub file: Option<String>,
   /// Working directory for the job (`--directory`).
+  pub directory: Option<String>,
+}
+
+/// Options for the `sail spark shell` command.
+#[napi(object)]
+#[derive(Default)]
+pub struct SailSparkShellOptions {
+  /// Working directory for the shell (`--directory`).
   pub directory: Option<String>,
 }
 #[napi]
@@ -56,6 +66,17 @@ pub fn sail_spark_server(options: Option<SailSparkServerOptions>) -> Result<i32>
     args.push("--port".to_string());
     args.push(port.to_string());
   }
+  if let Some(directory) = options.directory {
+    args.push("--directory".to_string());
+    args.push(directory);
+  }
+  sail(args)
+}
+
+#[napi]
+pub fn sail_spark_shell(options: Option<SailSparkShellOptions>) -> Result<i32> {
+  let options = options.unwrap_or_default();
+  let mut args = vec!["spark".to_string(), "shell".to_string()];
   if let Some(directory) = options.directory {
     args.push("--directory".to_string());
     args.push(directory);
