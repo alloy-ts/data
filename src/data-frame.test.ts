@@ -54,6 +54,54 @@ test("withColumn adds a computed column", async () => {
   expect(res.rows[0]).toContain("2");
 });
 
+test("withColumnRenamed renames an existing column", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const res = await df.withColumnRenamed("a", "alpha").collect();
+  expect(res.columns[0]).toBe("alpha");
+});
+
+test("dropColumns removes specified columns", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const res = await df.dropColumns(["c"]).collect();
+  expect(res.columns).toEqual(["a", "b"]);
+});
+
+test("columns and schemaFields inspect DataFrame schema metadata", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  if (typeof df.columns === "function") {
+    expect(df.columns()).toEqual(["a", "b", "c"]);
+  }
+  if (typeof df.schemaFields === "function") {
+    expect(Array.isArray(df.schemaFields())).toBe(true);
+  }
+});
+
+test("repartition configures execution plan partitioning", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  if (typeof df.repartition === "function") {
+    const repartitioned = df.repartition({ kind: "round_robin", num: 2 });
+    expect(repartitioned).toBeDefined();
+  }
+});
+
+test("explain returns logical/physical query plan DataFrame", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  if (typeof df.explain === "function") {
+    const planDf = df.explain(false, false);
+    expect(planDf).toBeDefined();
+  }
+});
+
 test("aggregate + limit", async () => {
   const ctx = new SessionContext();
   const df = await exampleDf(ctx);

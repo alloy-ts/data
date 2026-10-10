@@ -26,6 +26,18 @@ Executes an ANSI/Spark SQL query string and returns a materialized `QueryResult`
 ### `readCsv(path: string): Promise<DataFrame>`
 Reads a CSV file directly into a lazy `DataFrame`.
 
+### `readParquet(path: string): Promise<DataFrame>`
+Reads a Parquet file directly into a lazy `DataFrame`.
+
+### `readAvro(path: string): Promise<DataFrame>`
+Reads an Avro file directly into a lazy `DataFrame`.
+
+### `table(name: string): Promise<DataFrame>`
+Reads a previously registered table into a `DataFrame`.
+
+### `sqlDf(sql: string): Promise<DataFrame>`
+Executes a SQL query string and returns the resulting `DataFrame` (lazy evaluation).
+
 ---
 
 ## DataFrame
@@ -41,20 +53,48 @@ A lazy, immutable handle to a dataset plan, mirroring PySpark / Scala DataFrame 
 - `withColumnRenamed(oldName: string, newName: string): DataFrame`
 - `dropColumns(cols: string[]): DataFrame`
 - `aggregate(groupExprs: string[], aggs: string[]): DataFrame`
-- `sort(sortExprs: Array<{ expr: string; asc?: boolean }>): DataFrame`
+- `window(windowExprs: string[]): DataFrame`
+- `sort(sortExprs: Array<{ expr: string; asc?: boolean; nullsFirst?: boolean }>): DataFrame`
+- `sortBy(exprs: string[]): DataFrame`
 - `limit(skip: number, fetch: number): DataFrame`
 - `distinct(): DataFrame`
+- `distinctOn(on: string[], select: string[], sort?: Array<{ expr: string; asc?: boolean }>): DataFrame`
 - `union(other: DataFrame): DataFrame`
+- `unionDistinct(other: DataFrame): DataFrame`
+- `unionByName(other: DataFrame): DataFrame`
+- `unionByNameDistinct(other: DataFrame): DataFrame`
+- `intersect(other: DataFrame): DataFrame`
+- `intersectDistinct(other: DataFrame): DataFrame`
+- `except(other: DataFrame): DataFrame`
+- `exceptDistinct(other: DataFrame): DataFrame`
 - `join(right: DataFrame, joinType: string, leftKeys: string[], rightKeys: string[], filter?: string | null): DataFrame`
-- `fillNull(value: string, cols?: string[]): DataFrame`
+- `joinOn(right: DataFrame, joinType: string, onExprs: string[]): DataFrame`
+- `repartition(partitioning: { kind: string; num: number; columns?: string[] }): DataFrame`
+- `unnestColumns(columns: string[]): DataFrame`
+- `fillNull(value: string, columns: string[], dataType?: string): DataFrame`
+- `fillNan(value: string, columns: string[], dataType?: string): DataFrame`
+- `alias(aliasName: string): DataFrame`
+- `explain(verbose: boolean, analyze: boolean): DataFrame`
+
+### Schema & Metadata Accessors
+- `columns(): string[]`
+- `schemaFields(): Array<{ name: string; dataType: string; nullable: boolean }>`
+- `schema(): string`
+- `logicalPlan(): string`
 
 ### Actions (Asynchronous / Execution)
 - `collect(): Promise<QueryResult>`
+- `collectPartitioned(): Promise<QueryResult[]>`
 - `count(): Promise<number>`
-- `schema(): string`
-- `logicalPlan(): string`
+- `cache(): Promise<DataFrame>`
+- `describe(): Promise<DataFrame>`
+- `toArrowIpc(): Promise<Uint8Array>`
+- `show(): Promise<void>`
+- `showLimit(num: number): Promise<void>`
+- `toString(): Promise<string>`
 - `writeCsv(path: string): Promise<QueryResult>`
 - `writeParquet(path: string): Promise<QueryResult>`
+- `writeTable(tableName: string): Promise<QueryResult>`
 
 ---
 
