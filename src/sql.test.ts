@@ -90,3 +90,36 @@ test("nulls round-trip as null, not the string 'null'", async () => {
     ["3", "4"],
   ]);
 });
+
+test("Spark SQL aggregates: COUNT, SUM, AVG", async () => {
+  const ctx = new SessionContext();
+  const path = writeTempCsv("sql_aggs.csv", SAMPLE_CSV);
+  await ctx.registerCsv("example", path, true);
+
+  const res = await ctx.execute("SELECT COUNT(*) as cnt, SUM(a) as total_a FROM example");
+  expect(res.columns).toEqual(["cnt", "total_a"]);
+  expect(res.rows).toEqual([["3", "12"]]);
+});
+
+test("Spark SQL scalar functions and expressions: string & math", async () => {
+  const ctx = new SessionContext();
+  const res = await ctx.execute("SELECT LOWER('SPARK') as l, ABS(-10) as abs_val");
+  expect(res.columns).toEqual(["l", "abs_val"]);
+  expect(res.rows).toEqual([["spark", "10"]]);
+});
+
+test("Spark SQL CASE WHEN conditional expressions", async () => {
+  const ctx = new SessionContext();
+  const path = writeTempCsv("sql_case.csv", SAMPLE_CSV);
+  await ctx.registerCsv("example", path, true);
+
+  const res = await ctx.execute(
+    "SELECT a, CASE WHEN a > 3 THEN 'high' ELSE 'low' END as label FROM example ORDER BY a"
+  );
+  expect(res.columns).toEqual(["a", "label"]);
+  expect(res.rows).toEqual([
+    ["1", "low"],
+    ["4", "high"],
+    ["7", "high"],
+  ]);
+});
