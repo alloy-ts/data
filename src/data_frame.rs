@@ -147,15 +147,43 @@ fn infer_scalar(s: &str) -> ScalarValue {
   }
 }
 
+fn arrow_type_to_sql_type(data_type: &str) -> &str {
+  match data_type.to_ascii_lowercase().as_str() {
+    "float64" | "double" => "DOUBLE",
+    "float32" | "float" => "FLOAT",
+    "int64" | "bigint" => "BIGINT",
+    "int32" | "int" | "integer" => "INT",
+    "int16" | "smallint" => "SMALLINT",
+    "int8" | "tinyint" => "TINYINT",
+    "utf8" | "string" | "varchar" | "text" => "VARCHAR",
+    "boolean" | "bool" => "BOOLEAN",
+    "date32" | "date" => "DATE",
+    _ => data_type,
+  }
+}
+
 /// Resolve the fill value, casting it to `data_type` when one is given so that
 /// it matches the target column: `fillNull("0", ["amount"], "Float64")`.
 fn resolve_scalar(value: &str, data_type: Option<&str>) -> napi::Result<ScalarValue> {
   let Some(data_type) = data_type else {
     return Ok(infer_scalar(value));
   };
+  let sql_type = arrow_type_to_sql_type(data_type);
   let literal = format!("'{}'", value.replace('\'', "''"));
-  ScalarValue::from_sql(&format!("CAST({literal} AS {data_type})"), &DFSchema::empty())
-    .map_err(|e| invalid_arg(format!("cannot use {value:?} as {data_type}: {e}")))
+  let sql = format!("CAST({literal} AS {sql_type})");
+  let ctx = datafusion::prelude::SessionContext::new();
+  let expr = ctx.parse_sql_expr(&sql, &DFSchema::empty()).map_err(to_napi_err)?;
+  match expr {
+    Expr::Literal(sv, _) => sv.cast_to(&datafusion::arrow::datatypes::DataType::Utf8).map_err(to_napi_err),
+    Expr::Cast(datafusion::logical_expr::Cast { expr, field }) => {
+      if let Expr::Literal(sv, _) = *expr {
+        sv.cast_to(field.data_type()).map_err(to_napi_err)
+      } else {
+        Err(invalid_arg(format!("cannot parse literal from {value:?}")))
+      }
+    }
+    _ => Err(invalid_arg(format!("cannot use {value:?} as {data_type}"))),
+  }
 }
 
 #[napi]
@@ -659,7 +687,9 @@ impl DataFrame {
     let mut out = Vec::new();
     {
       let mut writer =
-        StreamWriter::try_new(&mut out, first.schema()).map_err(to_napi_err)?;
+        StreamWriter::try_new(&mut out, first.schema().as_ref()).map_err(|e| {
+          napi::Error::new(Status::GenericFailure, e.to_string())
+        })?;
       for batch in &batches {
         // `write` checks the schema itself; this message is just clearer.
         if batch.schema() != first.schema() {
@@ -668,9 +698,13 @@ impl DataFrame {
             "cannot write record batches with different schemas to one IPC stream",
           ));
         }
-        writer.write(batch).map_err(to_napi_err)?;
+        writer.write(batch).map_err(|e| {
+          napi::Error::new(Status::GenericFailure, e.to_string())
+        })?;
       }
-      writer.finish().map_err(to_napi_err)?;
+      writer.finish().map_err(|e| {
+        napi::Error::new(Status::GenericFailure, e.to_string())
+      })?;
     }
     Ok(Uint8Array::new(out))
   }

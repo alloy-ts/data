@@ -1,5 +1,3 @@
-import console from "node:console";
-
 // Re-export CLI API contract declarations
 export function sail(_args: string[]): number {
   throw new Error("Native addon binding required");
@@ -25,4 +23,6 @@ export function sailFlightServer(_options?: { ip?: string; port?: number; direct
   throw new Error("Native addon binding required");
 }
 
-console.log(main());
+export function sparkConnectVersion(): string {
+  throw new Error("Native addon binding required");
+}

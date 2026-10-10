@@ -19,6 +19,9 @@ test("CLI direct shell and programmable API function exports are defined on modu
 
   expect(addon).toHaveProperty("sailFlightServer");
   expect(typeof addon.sailFlightServer).toBe("function");
+
+  expect(addon).toHaveProperty("sparkConnectVersion");
+  expect(typeof addon.sparkConnectVersion).toBe("function");
 });
 
 test("Direct shell CLI argument execution calls sail function", () => {
@@ -31,4 +34,5 @@ test("Programmable NAPI API function calls option handlers", () => {
   expect(() => addon.sailSparkRun({ file: "app.py" })).toThrow("Native addon binding required");
   expect(() => addon.sailSparkMcpServer({ host: "127.0.0.1", port: 8000 })).toThrow("Native addon binding required");
   expect(() => addon.sailFlightServer({ ip: "127.0.0.1", port: 32010 })).toThrow("Native addon binding required");
+  expect(() => addon.sparkConnectVersion()).toThrow("Native addon binding required");
 });
