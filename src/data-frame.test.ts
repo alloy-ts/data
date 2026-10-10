@@ -44,6 +44,15 @@ test("selectColumns keeps only the named columns", async () => {
   expect(res.rowCount).toBe(3);
 });
 
+test("selectExprs projects SQL expressions", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const res = await df.selectExprs(["a", "b * 2 AS b2"]).collect();
+  expect(res.columns).toEqual(["a", "b2"]);
+  expect(res.rows[0]).toEqual(["1", "4"]);
+});
+
 test("withColumn adds a computed column", async () => {
   const ctx = new SessionContext();
   const df = await exampleDf(ctx);
@@ -52,6 +61,22 @@ test("withColumn adds a computed column", async () => {
   expect(res.columns).toContain("ab");
   // First row: a=1, b=2 -> ab="2"
   expect(res.rows[0]).toContain("2");
+});
+
+test("withColumnRenamed renames a column", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const res = await df.withColumnRenamed("a", "col_a").collect();
+  expect(res.columns).toEqual(["col_a", "b", "c"]);
+});
+
+test("dropColumns drops specified columns", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const res = await df.dropColumns(["c"]).collect();
+  expect(res.columns).toEqual(["a", "b"]);
 });
 
 test("aggregate + limit", async () => {
@@ -120,6 +145,36 @@ test("count returns the total number of rows", async () => {
   expect(n).toBe(3);
 });
 
+test("describe returns summary statistics DataFrame", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const statsDf = await df.describe();
+  const res = await statsDf.collect();
+  expect(res.columns.length).toBeGreaterThan(0);
+  expect(res.rowCount).toBeGreaterThan(0);
+});
+
+test("toArrowIpc yields Arrow IPC stream bytes", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  const bytes = await df.toArrowIpc();
+  expect(bytes).toBeInstanceOf(Uint8Array);
+  expect(bytes.length).toBeGreaterThan(0);
+});
+
+test("show, showLimit, and toString execute without errors", async () => {
+  const ctx = new SessionContext();
+  const df = await exampleDf(ctx);
+
+  await df.show();
+  await df.showLimit(2);
+  const str = await df.toString();
+  expect(typeof str).toBe("string");
+  expect(str.length).toBeGreaterThan(0);
+});
+
 test("schema and logicalPlan return human-readable strings", async () => {
   const ctx = new SessionContext();
   const df = await exampleDf(ctx);
@@ -129,14 +184,18 @@ test("schema and logicalPlan return human-readable strings", async () => {
   expect(df.logicalPlan().length).toBeGreaterThan(0);
 });
 
-test("writeParquet executes and resolves", async () => {
+test("writeCsv and writeParquet execute and resolve", async () => {
   const ctx = new SessionContext();
   const df = await exampleDf(ctx);
 
-  const out = join(tmpdir(), "df_out.parquet");
-  const res = await df.writeParquet(out);
-  // write_* returns a row count of rows written.
-  expect(res.rowCount).toBeGreaterThanOrEqual(0);
+  const csvOut = join(tmpdir(), "df_out.csv");
+  const parquetOut = join(tmpdir(), "df_out.parquet");
+
+  const csvRes = await df.writeCsv(csvOut);
+  expect(csvRes.rowCount).toBeGreaterThanOrEqual(0);
+
+  const parquetRes = await df.writeParquet(parquetOut);
+  expect(parquetRes.rowCount).toBeGreaterThanOrEqual(0);
 });
 
 test("fillNull fills missing values in a column", async () => {
