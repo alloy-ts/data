@@ -337,7 +337,30 @@ npm run build        # build + pack the TS layer
 npm test             # vite-plus/test over src/**/*.test.ts
 ```
 
+### CLI & Programmable NAPI API
+
+The Sail CLI can be invoked either directly via command-line arguments or through programmable TypeScript/NAPI options:
+
+```ts
+import {
+  sail,
+  sailSparkServer,
+  sailSparkShell,
+  sailSparkRun,
+  sailSparkMcpServer,
+  sailFlightServer,
+} from "@alloy-ts/data";
+
+// Direct shell CLI invocation:
+sail(["spark", "server", "--ip", "127.0.0.1", "--port", "50051"]);
+
+// Programmable NAPI API invocation:
+sailSparkServer({ ip: "127.0.0.1", port: 50051 });
+sailSparkShell();
+sailSparkRun({ file: "script.py" });
+sailSparkMcpServer({ host: "127.0.0.1", port: 8000, transport: "sse" });
+sailFlightServer({ ip: "127.0.0.1", port: 32010 });
+```
+
 See `src/sql.rs` (SQL API: `SessionContext`, `execute`, `QueryResult`),
-`src/data_frame.rs` (DataFrame API), and `src/cli.rs` (`sail`,
-`sailSparkServer`, `sailSparkShell`, `sailSparkRun` CLI entrypoints) for the
-NAPI bindings.
+`src/data_frame.rs` (DataFrame API), and `src/cli.rs` (`sail` direct runner and programmable CLI functions) for the NAPI bindings.
