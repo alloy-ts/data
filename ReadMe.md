@@ -337,5 +337,7 @@ npm run build        # build + pack the TS layer
 npm test             # vite-plus/test over src/**/*.test.ts
 ```
 
-See `src/sql.rs` (SQL API: `SessionContext`, `execute`, `QueryResult`) and
-`src/data_frame.rs` (DataFrame API) for the NAPI bindings.
+See `src/sql.rs` (SQL API: `SessionContext`, `execute`, `QueryResult`),
+`src/data_frame.rs` (DataFrame API), and `src/cli.rs` (`sail`,
+`sailSparkServer`, `sailSparkShell`, `sailSparkRun` CLI entrypoints) for the
+NAPI bindings.

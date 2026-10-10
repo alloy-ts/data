@@ -62,6 +62,12 @@ pub fn sail_spark_server(options: Option<SailSparkServerOptions>) -> Result<i32>
   }
   sail(args)
 }
+
+#[napi]
+pub fn sail_spark_shell() -> Result<i32> {
+  let args = vec!["spark".to_string(), "shell".to_string()];
+  sail(args)
+}
 #[napi]
 pub fn sail_spark_run(options: Option<SailSparkRunOptions>) -> Result<i32> {
   let options = options.unwrap_or_default();
